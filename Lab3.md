@@ -251,3 +251,7 @@ ggplot(lab3data, aes(x = Gender, y = SWL)) + geom_violin(aes(fill=Gender)) + sca
 
 A violin plot helps visualize the distribution, density, and variability
 of data. It can indicate skewness and show how data points are spread
+out across the range. You cannot see exact data points,
+outliers/patterns, or sample size. We can see that both RSE plots are
+left tailed with the male plot having two modalities. For SWL plot, we
+can see that the distribution for males and females are pretty similar.

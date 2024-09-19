@@ -27,8 +27,6 @@ library(ggplot2)
 library(psych)
 ```
 
-    ## Warning: package 'psych' was built under R version 4.3.3
-
     ## 
     ## Attaching package: 'psych'
 
@@ -41,7 +39,7 @@ library(bruceR)
 ```
 
     ## 
-    ## bruceR (v2023.9)
+    ## bruceR (v2024.6)
     ## Broadly Useful Convenient and Efficient R functions
     ## 
     ## Packages also loaded:
@@ -66,32 +64,19 @@ library(bruceR)
     ## https://psychbruce.github.io/bruceR
     ## 
     ## To use this package in publications, please cite:
-    ## Bao, H.-W.-S. (2023). bruceR: Broadly useful convenient and efficient R functions (Version 2023.9) [Computer software]. https://CRAN.R-project.org/package=bruceR
-
-    ## 
-    ## NEWS: A new version of bruceR (2024.6) is available (2024-06-13)!
-    ## 
-    ## ***** Please update *****
-    ## install.packages("bruceR", dep=TRUE)
+    ## Bao, H.-W.-S. (2024). bruceR: Broadly useful convenient and efficient R functions (Version 2024.6) [Computer software]. https://CRAN.R-project.org/package=bruceR
 
     ## 
     ## These packages are dependencies of `bruceR` but not installed:
-    ## - pacman, lmtest, vars, phia, GPArotation
+    ## - pacman, openxlsx, ggtext, lmtest, vars, phia, MuMIn, GGally
     ## 
     ## ***** Install all dependencies *****
     ## install.packages("bruceR", dep=TRUE)
 
 ``` r
 library(ggsci)
-```
-
-    ## Warning: package 'ggsci' was built under R version 4.3.3
-
-``` r
 library(see)
 ```
-
-    ## Warning: package 'see' was built under R version 4.3.3
 
     ## 
     ## Attaching package: 'see'
@@ -103,7 +88,7 @@ library(see)
 # Load Datasets
 
 ``` r
-lab3data <- read.csv("C:/Users/Colin/Documents/Github/Website/Lab3/lab3data.csv")
+lab3data <- read.csv("/Users/nehirarpat/Documents/Github/Lab3/lab3data.csv")
 ```
 
 # Missing Data
@@ -150,7 +135,21 @@ lab3data<- lab3data%>%
 
 
 #Now recode 2 into Female
+
+lab3data<- lab3data%>%
+  mutate_at(c('Gender'),funs(str_replace(., "2", "Female")))
 ```
+
+    ## Warning: `funs()` was deprecated in dplyr 0.8.0.
+    ## ℹ Please use a list of either functions or lambdas:
+    ## 
+    ## # Simple named list: list(mean = mean, median = median)
+    ## 
+    ## # Auto named with `tibble::lst()`: tibble::lst(mean, median)
+    ## 
+    ## # Using lambdas list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    ## generated.
 
 # Recode Variables: Changing Numeric Values to Different Numeric Values
 
@@ -179,6 +178,11 @@ lab3data %>% count(RSE2_R)
 
 ``` r
 #Now do the same for the other items (5,6,8,9)
+
+lab3data$RSE5_R <- 5 - lab3data$RSE5
+lab3data$RSE6_R <- 5 - lab3data$RSE6
+lab3data$RSE8_R <- 5 - lab3data$RSE8
+lab3data$RSE9_R <- 5 - lab3data$RSE9
 ```
 
 # Create Composites
@@ -188,15 +192,41 @@ lab3data %>% count(RSE2_R)
 
 
 #Fill in the items
-#lab3data <- lab3data %>%
-  #mutate(RSE = rowMeans(cbind(RSE1, ..., RSE10)))
+lab3data <- lab3data %>%
+  mutate(RSE = rowMeans(cbind(RSE1, RSE2_R, RSE3, RSE4, RSE5_R, RSE6_R, RSE7, RSE8_R, RSE9_R, RSE10)))
 
 #Create another composite for SWL, but this time use rowSums
+lab3data <- lab3data %>%
+  mutate(SWL = rowSums(cbind(SWL1, SWL2, SWL3, SWL4, SWL5)))
 ```
 
 # Get Summary Descriptive Statistics
 
+``` r
+lab3data %>% 
+  group_by(Gender) %>%
+  dplyr::summarize(mean_RSE    = mean(RSE),
+      mean_SWL    = mean(SWL),
+      std_dev_RSE = sd(RSE),
+      std_dev_SWL = sd(SWL),
+      corr_RSE_SWL  = cor(RSE, SWL)
+    )
+```
+
+    ## # A tibble: 3 × 6
+    ##   Gender mean_RSE mean_SWL std_dev_RSE std_dev_SWL corr_RSE_SWL
+    ##   <chr>     <dbl>    <dbl>       <dbl>       <dbl>        <dbl>
+    ## 1 Female     2.98     16.3       0.641        4.97        0.356
+    ## 2 Male       3.12     16.2       0.683        5.48        0.496
+    ## 3 <NA>       2.6      16        NA           NA          NA
+
 # Q1: Descrptively, which group has a higher self-esteem? What about life satisfaction? Is the relationship between self-esteem and life satisfaction stronger for males or for females?
+
+Males have higher self-esteem (3.121429 \> 2.983448) and females have
+higher life satisfaction (16.28966 \> 16.24675), although the difference
+is pretty small (unknown whether it is statistically significant). Based
+on the correlation calculated, the relationship between self-esteem and
+life satisfaction is stronger for males.
 
 # Visualization of Data Distribution
 
@@ -205,13 +235,20 @@ lab3data<- lab3data %>%
   drop_na(Gender)
 
 
-ggplot(lab3data, aes(x = Gender, y = RSE1)) + geom_violin(aes(fill=Gender)) + scale_fill_simpsons() + theme_modern()
+ggplot(lab3data, aes(x = Gender, y = RSE)) + geom_violin(aes(fill=Gender)) + scale_fill_simpsons() + theme_modern()
 ```
 
 ![](Lab3_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 #Create a plot for SWL by Gender with a different color palette
+ggplot(lab3data, aes(x = Gender, y = SWL)) + geom_violin(aes(fill=Gender)) + scale_fill_futurama() + theme_modern()
 ```
 
+![](Lab3_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+
 # Q2: What you can tell from looking at a violin plot? What you cannot tell? What inferences you can make based on the two violin plots?
+
+A violin plot helps visualize the distribution, density, and variability
+of data. It can indicate skewness and show how data points are spread
+out across the range. You cannot see exact data points or sample size
